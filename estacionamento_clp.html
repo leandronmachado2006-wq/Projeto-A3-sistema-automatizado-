@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLP Estacionamento — Guia Visual</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f14; --surface: #161920; --surface2: #1e2230; --border: #2a2f3f;
+  --accent: #00e5ff; --accent2: #7c3aed; --green: #22c55e; --red: #ef4444;
+  --yellow: #f59e0b; --text: #e2e8f0; --muted: #64748b;
+  --ladder-bg: #0a1628; --ladder-rail: #1e3a5f; --ladder-active: #00e5ff; --ladder-inactive: #2a3f5f;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.logo { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.logo span { color: var(--accent); }
+.step-counter { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); background: var(--surface2); padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); }
+.step-counter b { color: var(--accent); }
+.progress-bar { height: 3px; background: var(--border); }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width 0.5s ease; }
+.main { display: grid; grid-template-columns: 250px 1fr; min-height: calc(100vh - 71px); }
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 71px; height: calc(100vh - 71px); overflow-y: auto; }
+.sidebar-title { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; padding: 0 20px 12px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; font-size: 13px; color: var(--muted); }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { border-left-color: var(--accent); background: rgba(0,229,255,0.06); color: var(--accent); }
+.nav-item.done { color: var(--green); }
+.nav-item.done .nav-num { background: var(--green); color: #000; }
+.nav-num { width: 22px; height: 22px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+.nav-item.active .nav-num { background: var(--accent); color: #000; }
+.content { padding: 36px 44px; max-width: 880px; }
+.step-panel { display: none; }
+.step-panel.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.step-badge { display: inline-flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--accent); background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3); padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; }
+.step-title { font-size: 26px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; letter-spacing: -0.5px; }
+.step-desc { font-size: 15px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+.sim-window { background: #1a1f2e; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 22px; box-shadow: 0 16px 48px rgba(0,0,0,0.5); }
+.sim-titlebar { background: #252a3a; padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+.sim-dot { width: 10px; height: 10px; border-radius: 50%; }
+.sim-url { flex:1; background: #1a1f2e; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin: 0 8px; }
+.sim-toolbar-yellow { background: #fff8dc; border-bottom: 1px solid #e8d44d; padding: 6px 10px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.tb-btn { width: 42px; height: 38px; background: #fffacd; border: 1px solid #ccc; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #333; cursor: pointer; font-family: 'JetBrains Mono', monospace; }
+.tb-btn.hl2 { background: #48bb78; color: white; border-color: #276749; }
+.tb-sep { width: 1px; height: 28px; background: #ccc; margin: 0 4px; }
+.sim-body { display: grid; grid-template-columns: 230px 1fr; min-height: 200px; }
+.sim-vars { background: #f0f4ff; border-right: 1px solid #dde; }
+.sim-vars-header { display: grid; grid-template-columns: 1fr 65px 65px; padding: 5px 8px; background: #e8edf8; border-bottom: 1px solid #dde; font-size: 10px; font-weight: 700; color: #555; }
+.var-row { display: grid; grid-template-columns: 1fr 65px 65px; padding: 5px 8px; font-size: 10px; border-bottom: 1px solid #eee; align-items: center; transition: background 0.3s; }
+.var-row.hl { background: #dbeafe; }
+.vname { font-family: 'JetBrains Mono', monospace; color: #1a365d; font-size: 9px; }
+.vtype { color: #555; }
+.vval { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+.val-true { color: #22c55e; } .val-false { color: #94a3b8; } .val-num { color: #3b82f6; }
+.sim-ladder { background: var(--ladder-bg); padding: 16px; font-family: 'JetBrains Mono', monospace; }
+.rung { display: flex; align-items: center; margin-bottom: 18px; position: relative; }
+.rl { width: 4px; height: 40px; background: var(--ladder-rail); border-radius: 2px; }
+.wire { height: 3px; background: var(--ladder-inactive); flex: 1; transition: background 0.3s; min-width: 8px; }
+.wire.live { background: var(--ladder-active); box-shadow: 0 0 6px var(--accent); }
+.ct { display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; }
+.ct-lbl { font-size: 8px; color: #7ab3d4; white-space: nowrap; position: absolute; top: -15px; text-align: center; }
+.ct-body { display: flex; align-items: center; height: 22px; }
+.ct-line { width: 3px; height: 18px; background: var(--ladder-inactive); transition: background 0.3s; border-radius: 1px; }
+.ct-line.live { background: var(--ladder-active); box-shadow: 0 0 5px var(--accent); }
+.ct-gap { width: 9px; }
+.ct-slash { width: 11px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #4a7fa5; font-weight: 700; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(15deg); }
+.coil { display: flex; flex-direction: column; align-items: center; position: relative; }
+.coil-lbl { font-size: 8px; color: #7ab3d4; white-space: nowrap; position: absolute; top: -15px; }
+.coil-body { width: 26px; height: 22px; border: 2.5px solid var(--ladder-inactive); border-radius: 50%; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+.coil-body.live { border-color: var(--accent); box-shadow: 0 0 8px var(--accent); background: rgba(0,229,255,0.1); }
+.ctu { display: flex; flex-direction: column; align-items: center; position: relative; }
+.ctu-lbl { font-size: 8px; color: #7ab3d4; white-space: nowrap; position: absolute; top: -15px; }
+.ctu-body { background: #0a2040; border: 1.5px solid #1e3a5f; border-radius: 4px; padding: 2px 6px; font-size: 8px; color: #4a7fa5; text-align: center; min-width: 46px; transition: all 0.3s; }
+.ctu-body.live { border-color: var(--accent); color: var(--accent); }
+.blk { background: #0a2040; border: 1.5px solid #1a3a5f; border-radius: 4px; padding: 3px 8px; font-size: 8px; color: #7ab3d4; text-align: center; line-height: 1.4; position: relative; transition: all 0.3s; }
+.blk-lbl { font-size: 8px; color: #4a7fa5; position: absolute; top: -14px; left: 0; white-space: nowrap; }
+.blk.live { border-color: var(--accent); color: var(--accent); }
+.sr { display: flex; flex-direction: column; align-items: center; position: relative; }
+.sr-lbl { font-size: 8px; color: #7ab3d4; white-space: nowrap; position: absolute; top: -15px; }
+.sr-body { background: #0a2040; border: 2px solid var(--ladder-inactive); border-radius: 4px; padding: 2px 8px; font-size: 9px; font-weight: 700; color: #4a7fa5; transition: all 0.3s; }
+.sr-body.set-live { border-color: var(--red); color: var(--red); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+.sr-body.rst-live { border-color: var(--green); color: var(--green); box-shadow: 0 0 8px rgba(34,197,94,0.4); }
+.actions { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+.ai { display: flex; gap: 12px; align-items: flex-start; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 15px; }
+.ai:hover { border-color: var(--accent); }
+.an { width: 24px; height: 24px; border-radius: 50%; background: rgba(0,229,255,0.15); color: var(--accent); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+.at { font-size: 13px; line-height: 1.6; color: var(--text); }
+.chip { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+.cb { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+.cy { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+.cg { background: rgba(34,197,94,0.2); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+.cr { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+.tip { background: rgba(0,229,255,0.06); border: 1px solid rgba(0,229,255,0.2); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #7dd3fc; line-height: 1.6; margin-bottom: 22px; }
+.tip strong { color: var(--accent); }
+.nav-btns { display: flex; gap: 10px; }
+.btn-prev, .btn-next { padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: 'Syne', sans-serif; cursor: pointer; border: none; transition: all 0.2s; }
+.btn-prev { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+.btn-prev:hover { color: var(--text); border-color: var(--accent); }
+.btn-next { background: var(--accent); color: #000; }
+.btn-next:hover { background: #00c8e0; transform: translateY(-1px); }
+.status-panel { background: var(--ladder-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 16px; display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.sc { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; }
+.sc .sl { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+.sc .sv { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; }
+.s-on { color: var(--green); } .s-off { color: var(--muted); } .s-num { color: var(--accent); } .s-warn { color: var(--red); }
+.log-panel { background: var(--ladder-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 18px; font-family: 'JetBrains Mono', monospace; font-size: 11px; max-height: 110px; overflow-y: auto; }
+.log-entry { padding: 3px 0; border-bottom: 1px solid #0d1a2a; color: var(--muted); }
+.lt { color: #2a5f8f; margin-right: 8px; }
+.log-in { color: var(--green); } .log-out { color: var(--yellow); } .log-warn { color: var(--red); }
+.sim-controls { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+.sct { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.sim-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.sim-btn { padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: 'JetBrains Mono', monospace; transition: all 0.15s; }
+.sim-btn.car-in { border-color: var(--green); color: var(--green); }
+.sim-btn.car-in:hover { background: rgba(34,197,94,0.15); }
+.sim-btn.car-out { border-color: var(--yellow); color: var(--yellow); }
+.sim-btn.car-out:hover { background: rgba(245,158,11,0.15); }
+.sim-btn.rst-btn { border-color: var(--red); color: var(--red); }
+.sim-btn.rst-btn:hover { background: rgba(239,68,68,0.15); }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">CLP<span>.</span>Estacionamento</div>
+  <div class="step-counter">Passo <b id="hdr-cur">1</b> de <b>8</b></div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="prog" style="width:12.5%"></div></div>
+<div class="main">
+  <div class="sidebar"><div class="sidebar-title">Passos</div><div id="nav-list"></div></div>
+  <div class="content" id="ca">
+
+    <!-- STEP 1 -->
+    <div class="step-panel active" id="step-1">
+      <div class="step-badge">01 / Introdução</div>
+      <div class="step-title">O que vamos construir</div>
+      <div class="step-desc">Um sistema de estacionamento com 10 vagas controlado por CLP em linguagem Ladder. Sensores detectam entradas e saídas, o sistema conta as vagas e bloqueia quando lotado.</div>
+      <div class="sim-window">
+        <div class="sim-titlebar"><div class="sim-dot" style="background:#ff5f57"></div><div class="sim-dot" style="background:#ffbd2e"></div><div class="sim-dot" style="background:#28c840"></div><div class="sim-url">app.plcsimulator.online</div></div>
+        <div class="sim-toolbar-yellow">
+          <div class="tb-btn">↩</div><div class="tb-btn">↪</div><div class="tb-btn">📄</div><div class="tb-btn">📋</div><div class="tb-sep"></div>
+          <div class="tb-btn" title="Contato NA">⊣⊢</div><div class="tb-btn" title="NF">⊣/⊢</div><div class="tb-btn" title="Bobina">(O)</div><div class="tb-btn" title="Timer">⏱</div><div class="tb-btn" title="CTU">006</div><div class="tb-btn" title="Math">[+×]</div><div class="tb-btn" title="CMP">[≥]</div><div class="tb-btn" title="Set/Rst">[S]</div>
+        </div>
+        <div class="sim-body">
+          <div class="sim-vars">
+            <div class="sim-vars-header"><span>Nome</span><span>Tipo</span><span>Valor</span></div>
+            <div class="var-row"><span class="vname">sensorEntrada</span><span class="vtype">Bool</span><span class="vval val-false">False</span></div>
+            <div class="var-row"><span class="vname">sensorSaida</span><span class="vtype">Bool</span><span class="vval val-false">False</span></div>
+            <div class="var-row"><span class="vname">portaoEntrada</span><span class="vtype">Bool</span><span class="vval val-false">False</span></div>
+            <div class="var-row"><span class="vname">vagasOcupadas</span><span class="vtype">Number</span><span class="vval val-num">0</span></div>
+            <div class="var-row"><span class="vname">totalVagas</span><span class="vtype">Number</span><span class="vval val-num">10</span></div>
+            <div class="var-row"><span class="vname">sistemaLotado</span><span class="vtype">Bool</span><span class="vval val-false">False</span></div>
+          </div>
+          <div class="sim-ladder" style="display:flex;align-items:center;justify-content:center;color:#2a4a6f;font-size:12px;text-align:center;padding:20px">← Variáveis<br><br>Monte os Rungs aqui →</div>
+        </div>
+      </div>
+      <div class="tip"><strong>Estrutura:</strong> 10 variáveis + 6 rungs Ladder = sistema completo de controle de estacionamento.</div>
+      <div class="nav-btns"><button class="btn-next" onclick="go(2)">Começar →</button></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-panel" id="step-2">
+      <div class="step-badge">02 / Variáveis</div>
+      <div class="step-title">Criando todas as variáveis</div>
+      <div class="step-desc">No painel esquerdo do simulador, crie as 10 variáveis abaixo. Mude o tipo no dropdown antes de digitar o nome.</div>
+      <div class="sim-window">
+        <div class="sim-titlebar"><div class="sim-dot" style="background:#ff5f57"></div><div class="sim-dot" style="background:#ffbd2e"></div><div class="sim-dot" style="background:#28c840"></div><div class="sim-url">app.plcsimulator.online — painel esquerdo</div></div>
+        <div class="sim-body" style="min-height:260px">
+          <div class="sim-vars">
+            <div class="sim-vars-header"><span>Nome</span><span>Tipo</span><span>Valor</span></div>
+            <div class="var-row hl"><span class="vname">sensorEntrada</span><span class="vtype">Bool</span><span class="vval val-false">False</span></div>
+            <div class="var-row hl"><span class="vname">sensorSaida</span><span class="vtype">Bool</span><span class="vval val-false">False</span></div>
+            <div class="var-row hl"><span class="vname">portaoEntrada</span><span class="vtype">Bool</span><span class="vval val-false">False</span></div>
+            <div class="var-row hl"><span class="vname">portaoSaida</span><span class="vtype">Bool</span><span class="vval val-false">False</span></div>
+            <div class="var-row hl"><span class="vname">sistemaLotado</span><span class="vtype">Bool</span><span class="vval val-false">False</span></div>
+            <div class="var-row hl"><span class="vname">luzLotado</span><span class="vtype">Bool</span><span class="vval val-false">False</span></div>
+            <div class="var-row hl"><span class="vname">vagasOcupadas</span><span class="vtype">Number</span><span class="vval val-num">0</span></div>
+            <div class="var-row hl"><span class="vname">totalVagas</span><span class="vtype">Number</span><span class="vval val-num">10</span></div>
+            <div class="var-row hl"><span class="vname">contadorEntrada</span><span class="vtype">Counter</span><span class="vval val-false">—</span></div>
+            <div class="var-row hl"><span class="vname">contadorSaida</span><span class="vtype">Counter</span><span class="vval val-false">—</span></div>
+            <div style="padding:6px 8px;border-top:1px solid #ccc;background:#e8edf8;display:flex;gap:5px;align-items:center">
+              <select style="font-size:10px;padding:2px;border:1px solid #ccc;border-radius:3px"><option>Bool</option><option>Number</option><option selected>Counter</option></select>
+              <input style="font-size:10px;padding:2px 5px;border:1px solid #aaf;border-radius:3px;flex:1" placeholder="nome" value="contadorSaida"/>
+              <button style="font-size:10px;padding:2px 7px;background:#4a90e2;color:white;border:none;border-radius:3px">Enviar</button>
+            </div>
+          </div>
+          <div class="sim-ladder" style="display:flex;align-items:center;justify-content:center;color:#2a4a6f;font-size:12px;padding:16px;text-align:center">10 variáveis<br>criadas ✓</div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="ai"><div class="an">1</div><div class="at">Tipo <span class="chip cy">Bool</span> já está selecionado — crie: <span class="chip cb">sensorEntrada</span> <span class="chip cb">sensorSaida</span> <span class="chip cb">portaoEntrada</span> <span class="chip cb">portaoSaida</span> <span class="chip cb">sistemaLotado</span> <span class="chip cb">luzLotado</span></div></div>
+        <div class="ai"><div class="an">2</div><div class="at">Troque para <span class="chip cy">Number</span> → crie <span class="chip cb">vagasOcupadas</span> e <span class="chip cb">totalVagas</span>. Clique em <span class="chip cb">totalVagas</span> na lista e defina o valor como <span class="chip cg">10</span></div></div>
+        <div class="ai"><div class="an">3</div><div class="at">Troque para <span class="chip cy">Counter</span> → crie <span class="chip cb">contadorEntrada</span> e <span class="chip cb">contadorSaida</span></div></div>
+        <div class="ai"><div class="an">4</div><div class="at">Clique no ícone de <span class="chip cg">🔒 cadeado</span> para salvar — um arquivo .json será baixado</div></div>
+      </div>
+      <div class="nav-btns"><button class="btn-prev" onclick="go(1)">← Anterior</button><button class="btn-next" onclick="go(3)">Próximo →</button></div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-panel" id="step-3">
+      <div class="step-badge">03 / Rung 1</div>
+      <div class="step-title">Rung 1 — Entrada de veículos</div>
+      <div class="step-desc">O portão de entrada só abre se o sensor detectar um carro <b>E</b> o estacionamento não estiver lotado.</div>
+      <div class="sim-window">
+        <div class="sim-titlebar"><div class="sim-dot" style="background:#ff5f57"></div><div class="sim-dot" style="background:#ffbd2e"></div><div class="sim-dot" style="background:#28c840"></div><div class="sim-url">Rung 1</div></div>
+        <div class="sim-ladder" style="padding:36px 20px 24px">
+          <div style="font-size:9px;color:#2a4a6f;margin-bottom:22px">// sensorEntrada NA + sistemaLotado NF → portaoEntrada + CTU contadorEntrada</div>
+          <div class="rung">
+            <div class="rl"></div>
+            <div class="wire" style="max-width:14px"></div>
+            <div class="ct"><div class="ct-lbl">sensorEntrada</div><div class="ct-body"><div class="ct-line"></div><div class="ct-gap"></div><div class="ct-line"></div></div></div>
+            <div class="wire" style="max-width:14px"></div>
+            <div class="ct"><div class="ct-lbl">sistemaLotado NF</div><div class="ct-body" style="position:relative;width:24px"><div class="ct-line"></div><div class="ct-gap"></div><div class="ct-line"></div><div class="ct-slash">/</div></div></div>
+            <div class="wire" style="flex:1"></div>
+            <div class="coil"><div class="coil-lbl">portaoEntrada</div><div class="coil-body"></div></div>
+            <div class="wire" style="max-width:12px"></div>
+            <div class="ctu"><div class="ctu-lbl">contadorEntrada</div><div class="ctu-body">CTU·CU</div></div>
+            <div class="wire" style="max-width:14px"></div>
+            <div class="rl"></div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="ai"><div class="an">1</div><div class="at">Arraste <span class="chip cy">⊣⊢</span> (1º ícone amarelo) para o rung → clique nele → selecione <span class="chip cb">sensorEntrada</span></div></div>
+        <div class="ai"><div class="an">2</div><div class="at">Arraste <span class="chip cy">⊣/⊢</span> (2º ícone, tem barra) ao lado direito → clique → selecione <span class="chip cb">sistemaLotado</span></div></div>
+        <div class="ai"><div class="an">3</div><div class="at">Arraste <span class="chip cy">(O)</span> bobina no final → clique → selecione <span class="chip cb">portaoEntrada</span></div></div>
+        <div class="ai"><div class="an">4</div><div class="at">Arraste <span class="chip cy">006</span> contador → clique → selecione <span class="chip cb">contadorEntrada</span></div></div>
+      </div>
+      <div class="tip"><strong>⊣⊢ NA</strong> = passa quando TRUE (carro detectado). <strong>⊣/⊢ NF</strong> = passa quando FALSE (não lotado). Os dois em série = porta E.</div>
+      <div class="nav-btns"><button class="btn-prev" onclick="go(2)">← Anterior</button><button class="btn-next" onclick="go(4)">Próximo →</button></div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step-panel" id="step-4">
+      <div class="step-badge">04 / Rung 2</div>
+      <div class="step-title">Rung 2 — Saída de veículos</div>
+      <div class="step-desc">Veículos sempre podem sair — sem nenhuma verificação de vaga.</div>
+      <div class="sim-window">
+        <div class="sim-titlebar"><div class="sim-dot" style="background:#ff5f57"></div><div class="sim-dot" style="background:#ffbd2e"></div><div class="sim-dot" style="background:#28c840"></div><div class="sim-url">Rung 2</div></div>
+        <div class="sim-ladder" style="padding:36px 20px 24px">
+          <div style="font-size:9px;color:#2a4a6f;margin-bottom:22px">// sensorSaida NA → portaoSaida + CTU contadorSaida</div>
+          <div class="rung">
+            <div class="rl"></div>
+            <div class="wire" style="max-width:18px"></div>
+            <div class="ct"><div class="ct-lbl">sensorSaida</div><div class="ct-body"><div class="ct-line"></div><div class="ct-gap"></div><div class="ct-line"></div></div></div>
+            <div class="wire" style="flex:1"></div>
+            <div class="coil"><div class="coil-lbl">portaoSaida</div><div class="coil-body"></div></div>
+            <div class="wire" style="max-width:12px"></div>
+            <div class="ctu"><div class="ctu-lbl">contadorSaida</div><div class="ctu-body">CTU·CU</div></div>
+            <div class="wire" style="max-width:14px"></div>
+            <div class="rl"></div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="ai"><div class="an">1</div><div class="at">Adicione novo rung (clique abaixo do rung 1 ou botão +)</div></div>
+        <div class="ai"><div class="an">2</div><div class="at">Arraste <span class="chip cy">⊣⊢</span> → selecione <span class="chip cb">sensorSaida</span></div></div>
+        <div class="ai"><div class="an">3</div><div class="at">Arraste <span class="chip cy">(O)</span> bobina → selecione <span class="chip cb">portaoSaida</span></div></div>
+        <div class="ai"><div class="an">4</div><div class="at">Arraste <span class="chip cy">006</span> contador → selecione <span class="chip cb">contadorSaida</span></div></div>
+      </div>
+      <div class="tip">Mais simples que o Rung 1 — apenas 3 elementos, sem condição de lotação.</div>
+      <div class="nav-btns"><button class="btn-prev" onclick="go(3)">← Anterior</button><button class="btn-next" onclick="go(5)">Próximo →</button></div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step-panel" id="step-5">
+      <div class="step-badge">05 / Rungs 3–6</div>
+      <div class="step-title">Rungs 3 ao 6 — Lógica de controle</div>
+      <div class="step-desc">Calcula vagas ocupadas, ativa o bloqueio quando lotado e acende a luz de aviso.</div>
+      <div class="sim-window">
+        <div class="sim-titlebar"><div class="sim-dot" style="background:#ff5f57"></div><div class="sim-dot" style="background:#ffbd2e"></div><div class="sim-dot" style="background:#28c840"></div><div class="sim-url">Rungs 3 ao 6</div></div>
+        <div class="sim-ladder" style="padding:18px">
+          <div style="font-size:9px;color:#2a4a6f;margin-bottom:6px">// Rung 3: Subtração — vagas ocupadas</div>
+          <div class="rung" style="margin-bottom:26px"><div class="rl"></div><div class="wire" style="flex:1"></div><div class="blk"><div class="blk-lbl">vagasOcupadas = entradas − saídas</div>SUB<br><span style="font-size:7px">IN1: contadorEntrada.CV<br>IN2: contadorSaida.CV<br>OUT: vagasOcupadas</span></div><div class="wire" style="flex:1"></div><div class="rl"></div></div>
+          <div style="font-size:9px;color:#2a4a6f;margin-bottom:6px">// Rung 4: SET lotado quando vagas ≥ 10</div>
+          <div class="rung" style="margin-bottom:26px"><div class="rl"></div><div class="wire" style="max-width:12px"></div><div class="blk"><div class="blk-lbl">vagasOcupadas ≥ totalVagas</div>GEQ ≥<br><span style="font-size:7px">IN1: vagasOcupadas<br>IN2: totalVagas</span></div><div class="wire" style="flex:1"></div><div class="sr"><div class="sr-lbl">sistemaLotado</div><div class="sr-body">SET</div></div><div class="wire" style="max-width:12px"></div><div class="rl"></div></div>
+          <div style="font-size:9px;color:#2a4a6f;margin-bottom:6px">// Rung 5: RESET lotado quando vagas &lt; 10</div>
+          <div class="rung" style="margin-bottom:26px"><div class="rl"></div><div class="wire" style="max-width:12px"></div><div class="blk"><div class="blk-lbl">vagasOcupadas &lt; totalVagas</div>LES &lt;<br><span style="font-size:7px">IN1: vagasOcupadas<br>IN2: totalVagas</span></div><div class="wire" style="flex:1"></div><div class="sr"><div class="sr-lbl">sistemaLotado</div><div class="sr-body">RESET</div></div><div class="wire" style="max-width:12px"></div><div class="rl"></div></div>
+          <div style="font-size:9px;color:#2a4a6f;margin-bottom:6px">// Rung 6: Acende luz quando lotado</div>
+          <div class="rung"><div class="rl"></div><div class="wire" style="max-width:18px"></div><div class="ct"><div class="ct-lbl">sistemaLotado</div><div class="ct-body"><div class="ct-line"></div><div class="ct-gap"></div><div class="ct-line"></div></div></div><div class="wire" style="flex:1"></div><div class="coil"><div class="coil-lbl">luzLotado</div><div class="coil-body"></div></div><div class="wire" style="max-width:14px"></div><div class="rl"></div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="ai"><div class="an">R3</div><div class="at">Bloco <span class="chip cy">[+×] SUB</span> → IN1=<span class="chip cb">contadorEntrada.CV</span>, IN2=<span class="chip cb">contadorSaida.CV</span>, OUT=<span class="chip cb">vagasOcupadas</span></div></div>
+        <div class="ai"><div class="an">R4</div><div class="at">Bloco <span class="chip cy">[≥] GEQ</span> → IN1=<span class="chip cb">vagasOcupadas</span>, IN2=<span class="chip cb">totalVagas</span> + bobina <span class="chip cr">SET sistemaLotado</span></div></div>
+        <div class="ai"><div class="an">R5</div><div class="at">Bloco <span class="chip cy">[&lt;] LES</span> → IN1=<span class="chip cb">vagasOcupadas</span>, IN2=<span class="chip cb">totalVagas</span> + bobina <span class="chip cg">RESET sistemaLotado</span></div></div>
+        <div class="ai"><div class="an">R6</div><div class="at">Contato <span class="chip cy">⊣⊢</span> <span class="chip cb">sistemaLotado</span> + bobina <span class="chip cy">(O)</span> <span class="chip cb">luzLotado</span></div></div>
+      </div>
+      <div class="nav-btns"><button class="btn-prev" onclick="go(4)">← Anterior</button><button class="btn-next" onclick="go(6)">Próximo →</button></div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="step-panel" id="step-6">
+      <div class="step-badge">06 / Salvar</div>
+      <div class="step-title">Salve o projeto agora!</div>
+      <div class="step-desc">Antes de simular, salve para não perder o trabalho caso a aba feche.</div>
+      <div class="sim-window">
+        <div class="sim-titlebar"><div class="sim-dot" style="background:#ff5f57"></div><div class="sim-dot" style="background:#ffbd2e"></div><div class="sim-dot" style="background:#28c840"></div><div class="sim-url">app.plcsimulator.online</div></div>
+        <div class="sim-toolbar-yellow" style="gap:5px">
+          <div class="tb-btn">↩</div><div class="tb-btn">↪</div><div class="tb-btn">📄</div>
+          <div class="tb-btn hl2" title="SALVAR">🔒</div>
+          <div class="tb-btn">⬆</div>
+          <span style="font-size:10px;color:#c00;font-weight:700;margin-left:8px">← Clique aqui para salvar!</span>
+        </div>
+        <div class="sim-body" style="min-height:100px">
+          <div class="sim-vars">
+            <div class="sim-vars-header"><span>Nome</span><span>Tipo</span><span>Valor</span></div>
+            <div class="var-row"><span class="vname">sensorEntrada</span><span class="vtype">Bool</span><span class="vval val-false">False</span></div>
+            <div class="var-row"><span class="vname">vagasOcupadas</span><span class="vtype">Number</span><span class="vval val-num">0</span></div>
+            <div class="var-row"><span class="vname">totalVagas</span><span class="vtype">Number</span><span class="vval val-num">10</span></div>
+          </div>
+          <div class="sim-ladder" style="display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:13px;font-weight:700">6 rungs ✓ Salve agora!</div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="ai"><div class="an">1</div><div class="at">Clique no ícone de <span class="chip cg">🔒 cadeado</span> na barra do topo</div></div>
+        <div class="ai"><div class="an">2</div><div class="at">Um arquivo <span class="chip cy">.json</span> será baixado automaticamente — guarde-o</div></div>
+        <div class="ai"><div class="an">3</div><div class="at">Para reabrir depois: clique no ícone <span class="chip cy">📄 carregar</span> e selecione o arquivo</div></div>
+      </div>
+      <div class="tip"><strong>Salve sempre</strong> após montar cada rung — o simulador não salva automaticamente!</div>
+      <div class="nav-btns"><button class="btn-prev" onclick="go(5)">← Anterior</button><button class="btn-next" onclick="go(7)">Simular →</button></div>
+    </div>
+
+    <!-- STEP 7: SIMULAÇÃO INTERATIVA -->
+    <div class="step-panel" id="step-7">
+      <div class="step-badge">07 / Simulação</div>
+      <div class="step-title">Teste o sistema aqui!</div>
+      <div class="step-desc">Clique nos botões abaixo para simular. É exatamente assim que funciona no simulador real — clique em "Carro entra" 10 vezes e veja o bloqueio acontecer.</div>
+      <div class="status-panel">
+        <div class="sc"><div class="sl">Vagas ocupadas</div><div class="sv s-num" id="sv-v">0 / 10</div></div>
+        <div class="sc"><div class="sl">Portão entrada</div><div class="sv s-off" id="sv-p">FECHADO</div></div>
+        <div class="sc"><div class="sl">Sistema</div><div class="sv s-on" id="sv-s">LIVRE</div></div>
+      </div>
+      <div class="sim-window">
+        <div class="sim-titlebar"><div class="sim-dot" style="background:#ff5f57"></div><div class="sim-dot" style="background:#ffbd2e"></div><div class="sim-dot" style="background:#28c840"></div><div class="sim-url">Simulação ao vivo</div></div>
+        <div class="sim-body" style="min-height:220px">
+          <div class="sim-vars">
+            <div class="sim-vars-header"><span>Nome</span><span>Tipo</span><span>Valor</span></div>
+            <div class="var-row" id="vr-se"><span class="vname">sensorEntrada</span><span class="vtype">Bool</span><span class="vval val-false" id="vv-se">False</span></div>
+            <div class="var-row" id="vr-ss"><span class="vname">sensorSaida</span><span class="vtype">Bool</span><span class="vval val-false" id="vv-ss">False</span></div>
+            <div class="var-row" id="vr-pe"><span class="vname">portaoEntrada</span><span class="vtype">Bool</span><span class="vval val-false" id="vv-pe">False</span></div>
+            <div class="var-row" id="vr-ps"><span class="vname">portaoSaida</span><span class="vtype">Bool</span><span class="vval val-false" id="vv-ps">False</span></div>
+            <div class="var-row" id="vr-sl"><span class="vname">sistemaLotado</span><span class="vtype">Bool</span><span class="vval val-false" id="vv-sl">False</span></div>
+            <div class="var-row" id="vr-lz"><span class="vname">luzLotado</span><span class="vtype">Bool</span><span class="vval val-false" id="vv-lz">False</span></div>
+            <div class="var-row"><span class="vname">vagasOcupadas</span><span class="vtype">Number</span><span class="vval val-num" id="vv-vo">0</span></div>
+            <div class="var-row"><span class="vname">totalVagas</span><span class="vtype">Number</span><span class="vval val-num">10</span></div>
+          </div>
+          <div class="sim-ladder" style="padding:14px;display:flex;flex-direction:column;gap:14px" id="live-ld">
+            <div style="font-size:9px;color:#2a4a6f">// Rung 1 — ao vivo</div>
+            <div class="rung" id="r1-rung">
+              <div class="rl"></div>
+              <div class="wire" id="r1-w1" style="max-width:12px"></div>
+              <div class="ct"><div class="ct-lbl">sensorEntrada</div><div class="ct-body"><div class="ct-line" id="r1-l1"></div><div class="ct-gap"></div><div class="ct-line" id="r1-l2"></div></div></div>
+              <div class="wire" id="r1-w2" style="max-width:12px"></div>
+              <div class="ct"><div class="ct-lbl">sistemaLotado NF</div><div class="ct-body" style="position:relative;width:24px"><div class="ct-line" id="r1-l3"></div><div class="ct-gap"></div><div class="ct-line" id="r1-l4"></div><div class="ct-slash" id="r1-sl">/</div></div></div>
+              <div class="wire" id="r1-w3" style="flex:1"></div>
+              <div class="coil"><div class="coil-lbl">portaoEntrada</div><div class="coil-body" id="r1-coil"></div></div>
+              <div class="wire" style="max-width:10px"></div>
+              <div class="ctu"><div class="ctu-lbl">contadorEntrada</div><div class="ctu-body" id="r1-ctu">CTU·CU</div></div>
+              <div class="wire" style="max-width:12px"></div>
+              <div class="rl"></div>
+            </div>
+            <div style="font-size:9px;color:#2a4a6f">// Rung 2 — ao vivo</div>
+            <div class="rung" id="r2-rung">
+              <div class="rl"></div>
+              <div class="wire" style="max-width:16px"></div>
+              <div class="ct"><div class="ct-lbl">sensorSaida</div><div class="ct-body"><div class="ct-line" id="r2-l1"></div><div class="ct-gap"></div><div class="ct-line" id="r2-l2"></div></div></div>
+              <div class="wire" id="r2-w3" style="flex:1"></div>
+              <div class="coil"><div class="coil-lbl">portaoSaida</div><div class="coil-body" id="r2-coil"></div></div>
+              <div class="wire" style="max-width:10px"></div>
+              <div class="ctu"><div class="ctu-lbl">contadorSaida</div><div class="ctu-body" id="r2-ctu">CTU·CU</div></div>
+              <div class="wire" style="max-width:12px"></div>
+              <div class="rl"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sim-controls">
+        <div class="sct">Controles</div>
+        <div class="sim-btns">
+          <button class="sim-btn car-in" onclick="simIn()">🚗 Carro entra</button>
+          <button class="sim-btn car-out" onclick="simOut()">🚗 Carro sai</button>
+          <button class="sim-btn rst-btn" onclick="simReset()">↺ Resetar</button>
+        </div>
+      </div>
+      <div class="log-panel" id="log"></div>
+      <div class="nav-btns"><button class="btn-prev" onclick="go(6)">← Anterior</button><button class="btn-next" onclick="go(8)">Próximo →</button></div>
+    </div>
+
+    <!-- STEP 8 -->
+    <div class="step-panel" id="step-8">
+      <div class="step-badge">08 / Concluído</div>
+      <div class="step-title">Projeto completo! ✓</div>
+      <div class="step-desc">Você montou um sistema CLP completo com 10 variáveis e 6 rungs Ladder funcionando.</div>
+      <div class="sim-window">
+        <div class="sim-titlebar"><div class="sim-dot" style="background:#ff5f57"></div><div class="sim-dot" style="background:#ffbd2e"></div><div class="sim-dot" style="background:#28c840"></div><div class="sim-url">Projeto finalizado ✓</div></div>
+        <div class="sim-ladder" style="padding:18px">
+          <div style="font-size:9px;color:#22c55e;margin-bottom:12px;font-family:'JetBrains Mono',monospace">// Todos os 6 rungs montados e funcionando</div>
+          <div class="rung" style="margin-bottom:10px"><div class="rl"></div><div class="wire" style="max-width:12px"></div><div class="ct"><div class="ct-lbl">sensorEntrada</div><div class="ct-body"><div class="ct-line live"></div><div class="ct-gap"></div><div class="ct-line live"></div></div></div><div class="wire live" style="max-width:12px"></div><div class="ct"><div class="ct-lbl">sistemaLotado NF</div><div class="ct-body" style="position:relative;width:24px"><div class="ct-line live"></div><div class="ct-gap"></div><div class="ct-line live"></div><div class="ct-slash" style="color:var(--accent)">/</div></div></div><div class="wire live" style="flex:1"></div><div class="coil"><div class="coil-lbl">portaoEntrada</div><div class="coil-body live"></div></div><div class="wire live" style="max-width:10px"></div><div class="ctu"><div class="ctu-lbl">contadorEntrada</div><div class="ctu-body live">CTU·CU</div></div><div class="wire" style="max-width:12px"></div><div class="rl"></div></div>
+          <div style="font-size:9px;color:#3a6a9a;font-family:'JetBrains Mono',monospace;line-height:2.2;margin-top:8px">
+            R2: [sensorSaida ⊣⊢] → (portaoSaida) + CTU contadorSaida<br>
+            R3: SUB contadorEntrada.CV − contadorSaida.CV → vagasOcupadas<br>
+            R4: GEQ vagasOcupadas ≥ totalVagas → SET sistemaLotado<br>
+            R5: LES vagasOcupadas &lt; totalVagas → RESET sistemaLotado<br>
+            R6: [sistemaLotado ⊣⊢] → (luzLotado)
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="ai"><div class="an">✓</div><div class="at">10 variáveis criadas — Bool, Number e Counter</div></div>
+        <div class="ai"><div class="an">✓</div><div class="at">6 rungs montados com NA, NF, bobinas, CTU, SUB, GEQ, LES, SET e RESET</div></div>
+        <div class="ai"><div class="an">✓</div><div class="at">Testado: entrada, bloqueio na lotação e liberação na saída</div></div>
+        <div class="ai"><div class="an">✓</div><div class="at">Arquivo .json salvo com o ícone de cadeado</div></div>
+      </div>
+      <div class="tip"><strong>Teste final no simulador:</strong> clique ▶, force <span class="chip cb">sensorEntrada = TRUE</span> 10 vezes, na 11ª o portão não abre e <span class="chip cr">luzLotado</span> fica acesa!</div>
+      <div class="nav-btns"><button class="btn-prev" onclick="go(7)">← Anterior</button></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const navItems = ["Introdução","Variáveis","Rung 1 — Entrada","Rung 2 — Saída","Rungs 3–6","Salvar","Simulação","Conclusão"];
+let cur = 1;
+const navList = document.getElementById('nav-list');
+navItems.forEach((label,i) => {
+  const d = document.createElement('div');
+  d.className = 'nav-item'+(i===0?' active':'');
+  d.id = 'nav-'+(i+1);
+  d.innerHTML = `<div class="nav-num">${i+1}</div>${label}`;
+  d.onclick = () => go(i+1);
+  navList.appendChild(d);
+});
+function go(n) {
+  document.getElementById('step-'+cur)?.classList.remove('active');
+  document.getElementById('nav-'+cur)?.classList.remove('active');
+  if(cur<n) document.getElementById('nav-'+cur)?.classList.add('done');
+  cur=n;
+  document.getElementById('step-'+cur)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach((el,i) => {
+    el.classList.toggle('done',i+1<cur);
+    el.classList.toggle('active',i+1===cur);
+  });
+  document.getElementById('prog').style.width=(cur/8*100)+'%';
+  document.getElementById('hdr-cur').textContent=cur;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+// SIMULATION
+let vagas=0;
+function getT(){const d=new Date();return String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');}
+function addLog(msg,cls=''){
+  const p=document.getElementById('log');
+  if(!p.children.length){p.innerHTML='';}
+  const e=document.createElement('div');e.className='log-entry';
+  e.innerHTML=`<span class="lt">${getT()}</span><span class="${cls}">${msg}</span>`;
+  p.appendChild(e);p.scrollTop=p.scrollHeight;
+}
+function setV(id,val,cls){const e=document.getElementById(id);if(e){e.textContent=val;e.className='vval '+cls;}}
+function setRow(id,on){const e=document.getElementById(id);if(e)e.classList.toggle('hl',on);}
+function setLive(id,on){const e=document.getElementById(id);if(e)e.classList.toggle('live',on);}
+function updateUI(){
+  const lotado=vagas>=10;
+  setV('vv-vo',vagas,'val-num');
+  setV('vv-sl',lotado?'True':'False',lotado?'val-true':'val-false');
+  setV('vv-lz',lotado?'True':'False',lotado?'val-true':'val-false');
+  document.getElementById('sv-v').textContent=vagas+' / 10';
+  document.getElementById('sv-v').className='sv '+(lotado?'s-warn':'s-num');
+  document.getElementById('sv-s').textContent=lotado?'LOTADO':'LIVRE';
+  document.getElementById('sv-s').className='sv '+(lotado?'s-warn':'s-on');
+}
+function simIn(){
+  const lotado=vagas>=10;
+  setV('vv-se','True','val-true');setRow('vr-se',true);
+  setLive('r1-l1',true);setLive('r1-l2',true);
+  if(!lotado){
+    vagas++;
+    setLive('r1-w2',true);setLive('r1-l3',true);setLive('r1-l4',true);setLive('r1-w3',true);
+    document.getElementById('r1-coil').classList.add('live');
+    document.getElementById('r1-ctu').classList.add('live');
+    setV('vv-pe','True','val-true');setRow('vr-pe',true);
+    document.getElementById('sv-p').textContent='ABERTO';document.getElementById('sv-p').className='sv s-on';
+    addLog('🚗 Carro entrou. Vagas: '+vagas+'/10','log-in');
+  } else {
+    setLive('r1-w2',false);setLive('r1-l3',false);setLive('r1-l4',false);
+    document.getElementById('sv-p').textContent='BLOQUEADO';document.getElementById('sv-p').className='sv s-warn';
+    addLog('🚫 Bloqueado — estacionamento lotado!','log-warn');
+  }
+  updateUI();
+  setTimeout(()=>{
+    setV('vv-se','False','val-false');setRow('vr-se',false);
+    setLive('r1-l1',false);setLive('r1-l2',false);setLive('r1-w2',false);setLive('r1-l3',false);setLive('r1-l4',false);setLive('r1-w3',false);
+    document.getElementById('r1-coil').classList.remove('live');document.getElementById('r1-ctu').classList.remove('live');
+    setV('vv-pe','False','val-false');setRow('vr-pe',false);
+    if(!lotado){document.getElementById('sv-p').textContent='FECHADO';document.getElementById('sv-p').className='sv s-off';}
+  },1200);
+}
+function simOut(){
+  if(vagas===0){addLog('⚠ Nenhum carro no estacionamento.','log-warn');return;}
+  vagas--;
+  setV('vv-ss','True','val-true');setRow('vr-ss',true);
+  setLive('r2-l1',true);setLive('r2-l2',true);setLive('r2-w3',true);
+  document.getElementById('r2-coil').classList.add('live');document.getElementById('r2-ctu').classList.add('live');
+  setV('vv-ps','True','val-true');setRow('vr-ps',true);
+  addLog('🚗 Carro saiu. Vagas: '+vagas+'/10','log-out');
+  updateUI();
+  setTimeout(()=>{
+    setV('vv-ss','False','val-false');setRow('vr-ss',false);
+    setLive('r2-l1',false);setLive('r2-l2',false);setLive('r2-w3',false);
+    document.getElementById('r2-coil').classList.remove('live');document.getElementById('r2-ctu').classList.remove('live');
+    setV('vv-ps','False','val-false');setRow('vr-ps',false);
+  },1200);
+}
+function simReset(){
+  vagas=0;
+  ['se','ss','pe','ps','sl','lz'].forEach(k=>{setV('vv-'+k,'False','val-false');setRow('vr-'+k,false);});
+  ['r1-l1','r1-l2','r1-w2','r1-l3','r1-l4','r1-w3','r2-l1','r2-l2','r2-w3'].forEach(id=>setLive(id,false));
+  ['r1-coil','r1-ctu','r2-coil','r2-ctu'].forEach(id=>document.getElementById(id)?.classList.remove('live'));
+  document.getElementById('sv-p').textContent='FECHADO';document.getElementById('sv-p').className='sv s-off';
+  updateUI();addLog('↺ Sistema resetado.','');
+}
+// Init log
+document.getElementById('log').innerHTML='<div class="log-entry"><span class="lt">00:00</span><span>Sistema pronto. 10 vagas disponíveis.</span></div>';
+</script>
+</body>
+</html>
